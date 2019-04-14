@@ -124,5 +124,4 @@ func HandleRequest(ctx context.Context, event events.S3Event) error {
 func main() {
 	fmt.Println("Starting Lambda ...")
 	lambda.Start(HandleRequest)
-	fmt.Println("Lambda started")
 }

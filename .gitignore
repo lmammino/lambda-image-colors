@@ -12,3 +12,6 @@
 *.out
 
 build/
+
+.terraform
+terraform.tfstate
