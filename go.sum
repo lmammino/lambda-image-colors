@@ -8,9 +8,8 @@ github.com/aws/aws-sdk-go v1.19.11 h1:tqaTGER6Byw3QvsjGW0p018U2UOqaJPeJuzoaF7jjo
 github.com/aws/aws-sdk-go v1.19.11/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/elastic/go-elasticsearch v0.0.0 h1:Pd5fqOuBxKxv83b0+xOAJDAkziWYwFinWnBO0y+TZaA=
-github.com/elastic/go-elasticsearch/v7 v7.0.0-rc1 h1:Co33ByWkRhQXKkmas/5bkU3xbJvz/K2l1M0IvfEB6vo=
-github.com/elastic/go-elasticsearch/v7 v7.0.0-rc1/go.mod h1:OJ4wdbtDNk5g503kvlHLyErCgQwwzmDtaFC4XyOxXA4=
+github.com/elastic/go-elasticsearch/v6 v6.7.0 h1:Bluo96v8weQRM6IYBXrI3O1+iDbxU6iEzcXbDBfDlwA=
+github.com/elastic/go-elasticsearch/v6 v6.7.0/go.mod h1:UwaDJsD3rWLM5rKNFzv9hgox93HoX8utj1kxD9aFUcI=
 github.com/jkl1337/go-chromath v0.0.0-20140428033135-240283655afd h1:2E0mbjgdhauYromqh7z0hBgES+rO36oI/xLMHjE1cqg=
 github.com/jkl1337/go-chromath v0.0.0-20140428033135-240283655afd/go.mod h1:UNcxP8iShHB0njm/QF7z+UiYNPoTUnfSWExJCxM8Q/I=
 github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af h1:pmfjZENx5imkbgOkpRUYLnmbU7UEFbjtDA2hxJ1ichM=
