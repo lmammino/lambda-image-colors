@@ -5,8 +5,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net"
+	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -58,6 +61,10 @@ func HandleRequest(ctx context.Context, event events.S3Event) error {
 
 	cfg := elasticsearch.Config{
 		Addresses: strings.Split(esHosts, ","),
+		Transport: &http.Transport{
+			ResponseHeaderTimeout: 5 * time.Second,
+			DialContext:           (&net.Dialer{Timeout: 5 * time.Second}).DialContext,
+		},
 	}
 	esClient, err := elasticsearch.NewClient(cfg)
 	if err != nil {

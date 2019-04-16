@@ -2,6 +2,10 @@ provider "aws" {
   region = "us-east-1"
 }
 
+data "aws_region" "selected" {}
+
+data "aws_caller_identity" "selected" {}
+
 resource "random_id" "stack_id" {
   byte_length = 16
 }
@@ -45,64 +49,94 @@ resource "aws_iam_role" "image-colors-lambda" {
 EOF
 }
 
-resource "aws_iam_policy" "image-colors-lambda-s3-access" {
-  name        = "image-colors-lambda-s3-access"
-  description = "Allow image-colors to read images from S3"
+resource "aws_iam_role_policy" "image-colors-lambda-s3-access" {
+  name = "image-colors-lambda-s3-access"
+  role = "${aws_iam_role.image-colors-lambda.id}"
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "0",
       "Effect": "Allow",
       "Action": [
         "s3:ListBucket"
       ],
-      "Resource": "arn:aws:s3:::${aws_s3_bucket.images_bucket.arn}"
+      "Resource": [
+        "${aws_s3_bucket.images_bucket.arn}"
+      ]
     },
     {
-      "Sid": "1",
       "Effect": "Allow",
-      "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::${aws_s3_bucket.images_bucket.arn}/*"
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "${aws_s3_bucket.images_bucket.arn}/*"
+      ]
     }
   ]
 }
 EOF
 }
 
-resource "aws_iam_policy" "image-colors-lambda-cloudwatch-access" {
-  name        = "image-colors-lambda-cloudwatch-access"
-  description = "Allow image-colors to write logs to cloudwatch"
+resource "aws_iam_role_policy" "image-colors-lambda-cloudwatch-access" {
+  name = "image-colors-lambda-cloudwatch-access"
+  role = "${aws_iam_role.image-colors-lambda.id}"
 
   policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Sid": "1",
       "Effect": "Allow",
       "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
+        "logs:CreateLogStream"
+      ],
+      "Resource": [
+        "arn:aws:logs:${data.aws_region.selected.name}:${data.aws_caller_identity.selected.account_id}:log-group:/aws/lambda/image-colors:*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
         "logs:PutLogEvents"
       ],
-      "Resource": "arn:aws:logs:::*"
+      "Resource": [
+        "arn:aws:logs:${data.aws_region.selected.name}:${data.aws_caller_identity.selected.account_id}:log-group:/aws/lambda/image-colors:*:*"
+      ]
     }
   ]
 }
 EOF
 }
 
-resource "aws_iam_role_policy_attachment" "image-colors-lambda-policy-attach-1" {
-  role       = "${aws_iam_role.image-colors-lambda.name}"
-  policy_arn = "${aws_iam_policy.image-colors-lambda-s3-access.arn}"
-}
+resource "aws_iam_role_policy" "image-colors-lambda-es-access" {
+  name = "image-colors-lambda-es-access"
+  role = "${aws_iam_role.image-colors-lambda.id}"
 
-resource "aws_iam_role_policy_attachment" "image-colors-lambda-policy-attach-2" {
-  role       = "${aws_iam_role.image-colors-lambda.name}"
-  policy_arn = "${aws_iam_policy.image-colors-lambda-cloudwatch-access.arn}"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "es:ESHttpGet",
+        "es:ESHttpPut",
+        "es:ESHttpPost",
+        "es:ESHttpHead",
+        "es:Describe*",
+        "es:List*"
+      ],
+
+      "Resource": [
+        "${aws_elasticsearch_domain.image-colors.arn}"
+      ]
+    }
+  ]
+}
+EOF
 }
 
 resource "aws_lambda_function" "image-colors" {

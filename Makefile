@@ -19,3 +19,10 @@ build:
 .PHONY: integration
 integration:
 	tests/integration/run.sh
+
+.PHONY: deploy
+deploy:
+	cd stack && \
+	terraform plan -out plan && \
+	terraform apply plan && \
+	rm plan
