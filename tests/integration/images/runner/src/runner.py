@@ -10,8 +10,6 @@ from timeit import default_timer as timer
 
 def main():
     # environment variables
-    ELASTIC_ENDPOINT = os.environ['ELASTIC_ENDPOINT']
-    ELASTIC_INDEX = os.environ['ELASTIC_INDEX']
     S3_ENDPOINT = os.environ['S3_ENDPOINT']
     AWS_REGION = os.environ['AWS_REGION']
     AWS_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
@@ -40,15 +38,8 @@ def main():
     print('\n--- Waiting for environment to be up ---')
     print('\n---- 1. Lambda ----')
     utils.waitForLambda(LAMBDA_ENDPOINT)
-    print('\n---- 2. ElasticSearch ----')
-    utils.waitForElastic(ELASTIC_ENDPOINT)
-    print('\n---- 3. S3 (localstack) ----')
+    print('\n---- 2. S3 (localstack) ----')
     utils.waitForS3(s3)
-
-    # cleanup elastic search indices
-    print('\n\n--- Initialize ElasticSearch ---')
-    print('\n---- 1. Cleaning indices ----')
-    utils.clean_up_existing_elastic_templates(ELASTIC_ENDPOINT)
 
     # copy files to virtual S3 (localstack)
     print('\n\n--- Initialize storage ---')
@@ -58,7 +49,8 @@ def main():
     for file in config['files']:
         print(file)
         local_path = "{0}/{1}".format(STORAGE_PATH, file)
-        s3.put_object(Bucket=BUCKET_NAME, Key=file, Body=open(local_path, 'rb'))
+        s3.put_object(Bucket=BUCKET_NAME, Key=file,
+                      Body=open(local_path, 'rb'))
 
     # trigger the lambda for every file and validate elastic indices
     print('\n\n--- Lambda test ---')
@@ -67,10 +59,11 @@ def main():
         print(file)
         utils.executeLambda(BUCKET_NAME, file, AWS_REGION, LAMBDA_ENDPOINT)
 
-    print('\n---- 2. Validate ElasticSearch results ----')
+    print('\n---- 2. Validate Tags on all images ----')
     for file in config['files']:
         print(file)
-        utils.check_elastic_record(ELASTIC_ENDPOINT, ELASTIC_INDEX, "sample-bucket|{0}".format(file), config['palette'])
+        utils.validateTags(s3, BUCKET_NAME, file, config['palette'])
+
 
 try:
     t_start = timer()
