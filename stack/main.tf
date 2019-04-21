@@ -69,7 +69,8 @@ resource "aws_iam_role_policy" "image-colors-lambda-s3-access" {
     {
       "Effect": "Allow",
       "Action": [
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:PutObjectTagging"
       ],
       "Resource": [
         "${aws_s3_bucket.images_bucket.arn}/*"
@@ -111,34 +112,6 @@ resource "aws_iam_role_policy" "image-colors-lambda-cloudwatch-access" {
 EOF
 }
 
-resource "aws_iam_role_policy" "image-colors-lambda-es-access" {
-  name = "image-colors-lambda-es-access"
-  role = "${aws_iam_role.image-colors-lambda.id}"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "es:ESHttpGet",
-        "es:ESHttpPut",
-        "es:ESHttpPost",
-        "es:ESHttpHead",
-        "es:Describe*",
-        "es:List*"
-      ],
-
-      "Resource": [
-        "${aws_elasticsearch_domain.image-colors.arn}"
-      ]
-    }
-  ]
-}
-EOF
-}
-
 resource "aws_lambda_function" "image-colors" {
   filename      = "../build/image-colors.zip"
   function_name = "image-colors"
@@ -153,13 +126,6 @@ resource "aws_lambda_function" "image-colors" {
   timeout                        = 30
   reserved_concurrent_executions = 10
   publish                        = true
-
-  environment {
-    variables = {
-      ELASTIC_HOSTS = "${join(",", formatlist("https://%s:%s/", aws_elasticsearch_domain.image-colors.*.endpoint, "9200"))}"
-      ELASTIC_INDEX = "image_colors"
-    }
-  }
 
   tags = {
     Name     = "image-colors"
@@ -186,31 +152,6 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
   }
 }
 
-resource "aws_elasticsearch_domain" "image-colors" {
-  domain_name           = "es-${substr(random_id.stack_id.hex, 0, 16)}"
-  elasticsearch_version = "6.5"
-
-  cluster_config {
-    instance_type  = "t2.small.elasticsearch"
-    instance_count = 1
-  }
-
-  ebs_options {
-    ebs_enabled = true
-    volume_size = 10
-  }
-
-  tags = {
-    Domain   = "es-${substr(random_id.stack_id.hex, 0, 16)}"
-    Stack    = "${var.stack_name}"
-    Stack_id = "${random_id.stack_id.hex}"
-  }
-}
-
 output "stack_id" {
   value = "${random_id.stack_id.hex}"
-}
-
-output "elastic_urls" {
-  value = ["${join(",", formatlist("https://%s:%s/", aws_elasticsearch_domain.image-colors.*.endpoint, "9200"))}"]
 }

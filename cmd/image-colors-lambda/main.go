@@ -1,15 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"net"
-	"net/http"
 	"os"
-	"strings"
-	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -17,9 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/lmammino/lambda-image-colors/cmd/utils"
-
-	elasticsearch "github.com/elastic/go-elasticsearch/v6"
-	"github.com/elastic/go-elasticsearch/v6/esapi"
 )
 
 type ImageRecord struct {
@@ -50,27 +41,6 @@ func HandleRequest(ctx context.Context, event events.S3Event) error {
 		)
 	}
 
-	esHosts := os.Getenv("ELASTIC_HOSTS")
-	if esHosts == "" {
-		esHosts = "http://localhost:9200"
-	}
-	esIndex := os.Getenv("ELASTIC_INDEX")
-	if esIndex == "" {
-		esIndex = "images"
-	}
-
-	cfg := elasticsearch.Config{
-		Addresses: strings.Split(esHosts, ","),
-		Transport: &http.Transport{
-			ResponseHeaderTimeout: 5 * time.Second,
-			DialContext:           (&net.Dialer{Timeout: 5 * time.Second}).DialContext,
-		},
-	}
-	esClient, err := elasticsearch.NewClient(cfg)
-	if err != nil {
-		return err
-	}
-
 	for _, s3record := range event.Records {
 		bucket := s3record.S3.Bucket.Name
 		key := s3record.S3.Object.Key
@@ -90,38 +60,26 @@ func HandleRequest(ctx context.Context, event events.S3Event) error {
 			return err
 		}
 
-		newRecord := ImageRecord{
-			ID:     bucket + "|" + key,
-			Bucket: bucket,
-			Key:    key,
-			Colors: colors,
+		fmt.Printf("Indexing s3://%s/%s with colors -> %v\n", bucket, key, colors)
+
+		tags := []*s3.Tag{}
+		for i, color := range colors {
+			tagKey := fmt.Sprintf("Color%d", i+1)
+			tag := s3.Tag{Key: aws.String(tagKey), Value: aws.String(color)}
+			tags = append(tags, &tag)
 		}
 
-		// index the record in elastic search
-		body, err := json.Marshal(newRecord)
+		taggingRequest := &s3.PutObjectTaggingInput{
+			Bucket: &bucket,
+			Key:    &key,
+			Tagging: &s3.Tagging{
+				TagSet: tags,
+			},
+		}
+
+		_, err = s3Client.PutObjectTagging(taggingRequest)
 		if err != nil {
 			return err
-		}
-
-		fmt.Printf("Indexing %s with colors %v\n", newRecord.ID, newRecord.Colors)
-
-		req := esapi.IndexRequest{
-			Index:        esIndex,
-			DocumentType: "default",
-			DocumentID:   newRecord.ID,
-			Body:         bytes.NewReader(body),
-			Refresh:      "true",
-		}
-
-		// Perform the request with the client.
-		res, err := req.Do(context.Background(), esClient)
-		if err != nil {
-			return err
-		}
-		defer res.Body.Close()
-
-		if res.IsError() {
-			return fmt.Errorf("[%s] Error indexing document ID=%s:/n%s", res.Status(), newRecord.ID, res.String())
 		}
 	}
 
