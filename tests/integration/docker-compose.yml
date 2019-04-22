@@ -9,11 +9,6 @@ services:
       - DEFAULT_REGION=us-east-1
       - HOSTNAME=localstack
 
-  elasticsearch:
-    image: elasticsearch:6.7.1
-    environment:
-      - discovery.type=single-node
-
   image-colors:
     build: ./images/lambda/.
     command: /app/build/image-colors
@@ -27,8 +22,6 @@ services:
       - AWS_SECRET_ACCESS_KEY=foo
       - AWS_S3_ENDPOINT=http://localstack:5000
       - AWS_S3_USE_PATH=true
-      - ELASTIC_HOSTS=http://elasticsearch:9200
-      - ELASTIC_INDEX=image_colors
 
   test_runner:
     build: ./images/runner
@@ -40,10 +33,4 @@ services:
       - AWS_ACCESS_KEY_ID=foo
       - AWS_SECRET_ACCESS_KEY=foo
       - BUCKET_NAME=sample-bucket
-      - ELASTIC_ENDPOINT=http://elasticsearch:9200
-      - ELASTIC_INDEX=image_colors
       - LAMBDA_ENDPOINT=image-colors:8002
-
-volumes:
-  esdata:
-    driver: local
