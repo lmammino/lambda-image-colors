@@ -11,8 +11,10 @@ unit:
 
 .PHONY: build
 build:
+	go mod tidy
+	go mod vendor
 	mkdir -p build
-	GO111MODULE=on GOOS=linux /usr/local/go/bin/go build -mod=vendor -o build/image-colors ./cmd/image-colors-lambda
+	GOOS=linux go build -mod=vendor -o build/image-colors ./cmd/image-colors-lambda
 	cd build && zip image-colors.zip ./image-colors
 	echo "build/image-colors.zip created"
 

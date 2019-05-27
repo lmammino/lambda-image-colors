@@ -41,8 +41,7 @@ resource "aws_iam_role" "image-colors-lambda" {
       "Principal": {
         "Service": "lambda.amazonaws.com"
       },
-      "Effect": "Allow",
-      "Sid": ""
+      "Effect": "Allow"
     }
   ]
 }
@@ -154,4 +153,12 @@ resource "aws_s3_bucket_notification" "bucket_notification" {
 
 output "stack_id" {
   value = "${random_id.stack_id.hex}"
+}
+
+output "s3_bucket" {
+  value = "${aws_s3_bucket.images_bucket.id}"
+}
+
+output "cloudwatch_log_stream" {
+  value = "arn:aws:logs:${data.aws_region.selected.name}:${data.aws_caller_identity.selected.account_id}:log-group:/aws/lambda/image-colors"
 }
