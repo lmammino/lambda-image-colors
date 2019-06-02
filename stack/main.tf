@@ -2,10 +2,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-data "aws_region" "selected" {}
-
-data "aws_caller_identity" "selected" {}
-
 resource "random_id" "stack_id" {
   byte_length = 16
 }
@@ -14,16 +10,16 @@ variable "stack_name" {
   default = "image-colors"
 }
 
-variable "bucket_name" {
-  default = "image-colors"
+variable "bucket_name-prefix" {
+  default = "image-colors-"
 }
 
 resource "aws_s3_bucket" "images_bucket" {
-  bucket = "${var.bucket_name}-${random_id.stack_id.hex}"
+  bucket = "${var.bucket_name-prefix}${random_id.stack_id.hex}"
   acl    = "private"
 
   tags = {
-    Name     = "${var.bucket_name}-${random_id.stack_id.hex}"
+    Name     = "${var.bucket_name-prefix}${random_id.stack_id.hex}"
     Stack    = "${var.stack_name}"
     Stack_id = "${random_id.stack_id.hex}"
   }
@@ -80,6 +76,16 @@ resource "aws_iam_role_policy" "image-colors-lambda-s3-access" {
 EOF
 }
 
+resource "aws_cloudwatch_log_group" "image-colors-lambda-cloudwatch-log-group" {
+  name              = "/aws/lambda/image-colors"
+  retention_in_days = 7
+
+  tags = {
+    Stack    = "${var.stack_name}"
+    Stack_id = "${random_id.stack_id.hex}"
+  }
+}
+
 resource "aws_iam_role_policy" "image-colors-lambda-cloudwatch-access" {
   name = "image-colors-lambda-cloudwatch-access"
   role = "${aws_iam_role.image-colors-lambda.id}"
@@ -94,7 +100,7 @@ resource "aws_iam_role_policy" "image-colors-lambda-cloudwatch-access" {
         "logs:CreateLogStream"
       ],
       "Resource": [
-        "arn:aws:logs:${data.aws_region.selected.name}:${data.aws_caller_identity.selected.account_id}:log-group:/aws/lambda/image-colors:*"
+        "${aws_cloudwatch_log_group.image-colors-lambda-cloudwatch-log-group.arn}"
       ]
     },
     {
@@ -103,7 +109,7 @@ resource "aws_iam_role_policy" "image-colors-lambda-cloudwatch-access" {
         "logs:PutLogEvents"
       ],
       "Resource": [
-        "arn:aws:logs:${data.aws_region.selected.name}:${data.aws_caller_identity.selected.account_id}:log-group:/aws/lambda/image-colors:*:*"
+        "${aws_cloudwatch_log_group.image-colors-lambda-cloudwatch-log-group.arn}:*"
       ]
     }
   ]
@@ -159,6 +165,6 @@ output "s3_bucket" {
   value = "${aws_s3_bucket.images_bucket.id}"
 }
 
-output "cloudwatch_log_stream" {
-  value = "arn:aws:logs:${data.aws_region.selected.name}:${data.aws_caller_identity.selected.account_id}:log-group:/aws/lambda/image-colors"
+output "cloudwatch_log_group" {
+  value = "${aws_cloudwatch_log_group.image-colors-lambda-cloudwatch-log-group.arn}"
 }
