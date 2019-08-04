@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# run the command passed as argument in the background
+# (this is generally the lambda executable)
 "$@" &
 
 # give lambda 1 second to start
