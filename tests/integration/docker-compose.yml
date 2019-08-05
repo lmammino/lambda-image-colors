@@ -23,7 +23,7 @@ services:
       - AWS_S3_ENDPOINT=http://localstack:5000
       - AWS_S3_USE_PATH=true
 
-  test_runner:
+  test-runner:
     build: ./images/runner
     command: 'true' # no-op by default, redefined in run.sh
     environment:
