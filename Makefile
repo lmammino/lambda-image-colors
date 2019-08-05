@@ -4,6 +4,7 @@ test: lint unit build integration
 .PHONY: lint
 lint:
 	GO111MODULE=on go vet -mod=vendor ./...
+	golint --set_exit_status cmd/...
 
 .PHONY: unit
 unit:

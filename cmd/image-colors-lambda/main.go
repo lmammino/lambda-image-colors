@@ -13,6 +13,8 @@ import (
 	"github.com/lmammino/lambda-image-colors/cmd/utils"
 )
 
+// ImageRecord represents an Image record with references to the S3 bucket
+// where it's saved and the detected prominent colors
 type ImageRecord struct {
 	ID     string   `json:"-"`
 	Key    string   `json:"key"`
@@ -20,6 +22,8 @@ type ImageRecord struct {
 	Colors []string `json:"colors"`
 }
 
+// HandleRequest is the actual Lambda handler, the logic that will be executed
+// once an event is received
 func HandleRequest(ctx context.Context, event events.S3Event) error {
 	palette := utils.GetDefaultPalette()
 

@@ -11,8 +11,12 @@ import (
 	"io"
 )
 
+// Palette defines a palette of colors.
+// It's essentially a map where keys are color names and values is a sequence of
+// 3 RGB uint32 values
 type Palette map[string][]uint32
 
+// GetDefaultPalette returns a default palette
 func GetDefaultPalette() *Palette {
 	return &Palette{
 		"red":       {255, 0, 0},
@@ -68,6 +72,9 @@ func appendIfMissing(slice []string, value string) []string {
 	return append(slice, value)
 }
 
+// GetProminentColors takes a Reader and a palette. It reads the image content
+// using the reader and identifies the prominent colors in it which are returned
+// as a slice of string values.
 func GetProminentColors(imageContent io.Reader, palette Palette) ([]string, error) {
 	img, _, err := image.Decode(imageContent)
 	if err != nil {

@@ -3,7 +3,7 @@ version: '3'
 services:
 
   localstack:
-    image: localstack/localstack:0.8.7
+    image: localstack/localstack:0.9.6
     environment:
       - SERVICES=s3:5000
       - DEFAULT_REGION=us-east-1
